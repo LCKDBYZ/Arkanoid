@@ -24,7 +24,7 @@ namespace Arkanoid
             InitializeComponent();
 
             gameTimer = new System.Windows.Forms.Timer();
-            gameTimer.Interval = 16; // kb. 60 FPS
+            gameTimer.Interval = 16; // about 60 FPS
             gameTimer.Tick += GameTimer_Tick;
             gameTimer.Start();
 
@@ -51,6 +51,24 @@ namespace Arkanoid
             ballX += ballDX;
             ballY += ballDY;
 
+            // Ball hits walls
+            if (ballX <= 0 || ballX + ballSize >= ClientSize.Width) {
+                ballDX *= -1;
+            }
+
+            // Ball hits ceiling
+            if (ballY <= 0) {
+                ballDY *= -1;
+            }
+
+            // Ball hits platform
+            if (ballY + ballSize >= paddleY &&
+                ballY + ballSize <= paddleY + paddleHeight &&
+                ballX + ballSize >= paddleX &&
+                ballX <= paddleX + paddleWidth) {
+                ballDY *= -1;
+            }
+
             Invalidate(); // Repaint
         }
 
@@ -69,7 +87,7 @@ namespace Arkanoid
             var g = e.Graphics;
 
             // Platform
-            g.FillRectangle(Brushes.White, paddleX, paddleY, paddleWidth, paddleHeight);
+            g.FillRectangle(Brushes.Black, paddleX, paddleY, paddleWidth, paddleHeight);
 
             // Ball
             g.FillEllipse(Brushes.Red, ballX, ballY, ballSize, ballSize);
