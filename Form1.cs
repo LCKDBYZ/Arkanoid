@@ -1,3 +1,4 @@
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.TrackBar;
 
 namespace Arkanoid
@@ -25,8 +26,9 @@ namespace Arkanoid
         // Timer
         private System.Windows.Forms.Timer gameTimer;
 
-        //Game Over
+        //Game Status
         private bool isGameOver = false;
+        private bool isGameWon = false;
 
         public Form1() {
             InitializeComponent();
@@ -63,41 +65,11 @@ namespace Arkanoid
             ballX += ballDX;
             ballY += ballDY;
 
-            // Ball hits walls
-            if (ballX <= 0 || ballX + ballSize >= ClientSize.Width) {
-                ballDX *= -1;
-            }
+            CollisionCheck();
 
-            // Ball hits ceiling
-            if (ballY <= 0) {
-                ballDY *= -1;
-            }
-
-            // Ball hits platform
-            if (ballY + ballSize >= paddleY &&
-                ballY + ballSize <= paddleY + paddleHeight &&
-                ballX + ballSize >= paddleX &&
-                ballX <= paddleX + paddleWidth) {
-                ballDY *= -1;
-            }
-
-            // Ball hits bricks
-            foreach (Brick brick in bricks) {
-                if (!brick.IsAlive) continue;
-
-                if (ballX + ballSize >= brick.X &&
-                    ballX <= brick.X + brick.Width &&
-                    ballY + ballSize >= brick.Y &&
-                    ballY <= brick.Y + brick.Height) {
-                    brick.IsAlive = false;
-                    ballDY *= -1;
-                    break;
-                }
-            }
-
-            // Ball hits ground
-            if (ballY + ballSize >= ClientSize.Height) {
-                isGameOver = true;
+            // Win check
+            if (bricks.All(b => !b.IsAlive)) {
+                isGameWon = true;
                 gameTimer.Stop();
             }
 
@@ -146,6 +118,19 @@ namespace Arkanoid
                 leftPressed = false;
                 rightPressed = false;
             }
+
+            // Game Won text
+            if (isGameWon) {
+                string text = "GAME WON";
+                using (Font font = new Font("Arial", 40, FontStyle.Bold)) {
+                    SizeF textSize = g.MeasureString(text, font);
+                    float x = (ClientSize.Width - textSize.Width) / 2;
+                    float y = (ClientSize.Height - textSize.Height) / 2;
+                    g.DrawString(text, font, Brushes.Yellow, x, y);
+                }
+                leftPressed = false;
+                rightPressed = false;
+            }
         }
 
         private void CreateBricks() {
@@ -164,6 +149,62 @@ namespace Arkanoid
                     float y = row * (brickHeight + padding) + offsetTop;
                     bricks.Add(new Brick(x, y, brickWidth, brickHeight));
                 }
+            }
+        }
+
+        private void CollisionCheck() {
+            // Ball hits walls
+            if (ballX <= 0 || ballX + ballSize >= ClientSize.Width) {
+                ballDX *= -1;
+            }
+
+            // Ball hits ceiling
+            if (ballY <= 0) {
+                ballDY *= -1;
+            }
+
+            // Ball hits platform
+            if (ballY + ballSize >= paddleY &&
+                ballY + ballSize <= paddleY + paddleHeight &&
+                ballX + ballSize >= paddleX &&
+                ballX <= paddleX + paddleWidth) {
+                ballDY *= -1;
+            }
+
+            // Ball hits bricks
+            foreach (Brick brick in bricks) {
+                if (!brick.IsAlive) continue;
+
+                if (ballX + ballSize >= brick.X &&
+                    ballX <= brick.X + brick.Width &&
+                    ballY + ballSize >= brick.Y &&
+                    ballY <= brick.Y + brick.Height) {
+                    brick.IsAlive = false;
+
+                    // How much overlap
+                    float overlapLeft = (ballX + ballSize) - brick.X;
+                    float overlapRight = (brick.X + brick.Width) - ballX;
+                    float overlapTop = (ballY + ballSize) - brick.Y;
+                    float overlapBottom = (brick.Y + brick.Height) - ballY;
+
+                    float minOverlapX = Math.Min(overlapLeft, overlapRight);
+                    float minOverlapY = Math.Min(overlapTop, overlapBottom);
+
+                    if (minOverlapX < minOverlapY) {
+                        ballDX *= -1; // Ball hit brick from the side
+                    }
+                    else {
+                        ballDY *= -1; // Ball hit brick from the top/bottom
+                    }
+
+                    break;
+                }
+            }
+
+            // Ball hits ground
+            if (ballY + ballSize >= ClientSize.Height) {
+                isGameOver = true;
+                gameTimer.Stop();
             }
         }
     }
