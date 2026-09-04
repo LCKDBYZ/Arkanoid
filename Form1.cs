@@ -1,3 +1,5 @@
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TrackBar;
+
 namespace Arkanoid
 {
     public partial class Form1 : Form {
@@ -12,6 +14,9 @@ namespace Arkanoid
         private int paddleY = 550;
         private int paddleWidth = 100, paddleHeight = 15;
         private int paddleSpeed = 8;
+
+        // Bricks
+        private List<Brick> bricks = new List<Brick>();
 
         // Keyboard status
         private bool leftPressed = false;
@@ -37,6 +42,8 @@ namespace Arkanoid
 
             this.KeyDown += Form1_KeyDown;
             this.KeyUp += Form1_KeyUp;
+
+            CreateBricks();
 
         }
 
@@ -74,11 +81,24 @@ namespace Arkanoid
                 ballDY *= -1;
             }
 
+            // Ball hits bricks
+            foreach (Brick brick in bricks) {
+                if (!brick.IsAlive) continue;
+
+                if (ballX + ballSize >= brick.X &&
+                    ballX <= brick.X + brick.Width &&
+                    ballY + ballSize >= brick.Y &&
+                    ballY <= brick.Y + brick.Height) {
+                    brick.IsAlive = false;
+                    ballDY *= -1;
+                    break;
+                }
+            }
+
             // Ball hits ground
             if (ballY + ballSize >= ClientSize.Height) {
                 isGameOver = true;
                 gameTimer.Stop();
-
             }
 
             Invalidate(); // Repaint
@@ -98,11 +118,21 @@ namespace Arkanoid
             base.OnPaint(e);
             var g = e.Graphics;
 
+            // we need to paint the bricks first so everything can go over them
+            // Bricks
+            foreach (Brick brick in bricks) {
+                if (brick.IsAlive) {
+                    g.FillRectangle(Brushes.SteelBlue, brick.X, brick.Y, brick.Width, brick.Height);
+                }
+            }
+
             // Platform
             g.FillRectangle(Brushes.Black, paddleX, paddleY, paddleWidth, paddleHeight);
 
             // Ball
             g.FillEllipse(Brushes.Red, ballX, ballY, ballSize, ballSize);
+
+            
 
             // Game Over text
             if (isGameOver) {
@@ -112,6 +142,27 @@ namespace Arkanoid
                     float x = (ClientSize.Width - textSize.Width) / 2;
                     float y = (ClientSize.Height - textSize.Height) / 2;
                     g.DrawString(text, font, Brushes.Red, x, y);
+                }
+                leftPressed = false;
+                rightPressed = false;
+            }
+        }
+
+        private void CreateBricks() {
+            int rows = 5;
+            int cols = 9;
+            int brickWidth = 80;
+            int brickHeight = 25;
+            int padding = 8;   // Gap between bricks
+            int offsetTop = 50; // Gap from the top
+
+            bricks.Clear();
+
+            for (int row = 0; row < rows; row++) {
+                for (int col = 0; col < cols; col++) {
+                    float x = col * (brickWidth + padding) + padding;
+                    float y = row * (brickHeight + padding) + offsetTop;
+                    bricks.Add(new Brick(x, y, brickWidth, brickHeight));
                 }
             }
         }
