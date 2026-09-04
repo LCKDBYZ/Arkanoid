@@ -55,6 +55,7 @@ namespace Arkanoid
 
         private void GameTimer_Tick(object sender, EventArgs e) {
             if (isGameOver) return;
+            if (isGameWon) return;
 
             // Moving the platform
             if (leftPressed) paddleX -= paddleSpeed;
@@ -79,6 +80,10 @@ namespace Arkanoid
         private void Form1_KeyDown(object sender, KeyEventArgs e) {
             if (e.KeyCode == Keys.Left || e.KeyCode == Keys.A) leftPressed = true;
             if (e.KeyCode == Keys.Right || e.KeyCode == Keys.D) rightPressed = true;
+
+            if (e.KeyCode == Keys.Enter && (isGameOver || isGameWon)) {
+                ResetGame();
+            }
         }
 
         private void Form1_KeyUp(object sender, KeyEventArgs e) {
@@ -115,26 +120,29 @@ namespace Arkanoid
                     float y = (ClientSize.Height - textSize.Height) / 2;
                     g.DrawString(text, font, Brushes.Red, x, y);
                 }
+                DrawRestartHint(g);
+
                 leftPressed = false;
                 rightPressed = false;
             }
 
             // Game Won text
             if (isGameWon) {
-                string text = "GAME WON";
+                string text = "YOU WIN!";
                 using (Font font = new Font("Arial", 40, FontStyle.Bold)) {
                     SizeF textSize = g.MeasureString(text, font);
                     float x = (ClientSize.Width - textSize.Width) / 2;
                     float y = (ClientSize.Height - textSize.Height) / 2;
                     g.DrawString(text, font, Brushes.Yellow, x, y);
                 }
+                DrawRestartHint(g);
                 leftPressed = false;
                 rightPressed = false;
             }
         }
 
         private void CreateBricks() {
-            int rows = 5;
+            int rows = 3;
             int cols = 9;
             int brickWidth = 80;
             int brickHeight = 25;
@@ -205,6 +213,39 @@ namespace Arkanoid
             if (ballY + ballSize >= ClientSize.Height) {
                 isGameOver = true;
                 gameTimer.Stop();
+            }
+        }
+
+        private void ResetGame() {
+            // Ball
+            ballX = 400;
+            ballY = 300;
+            ballDX = 4;
+            ballDY = -4;
+
+            // Paddle
+            paddleX = 350;
+
+            // Keyboard
+            leftPressed = false;
+            rightPressed = false;
+
+            // State flags
+            isGameOver = false;
+            isGameWon = false;
+
+            // Bricks
+            CreateBricks();
+            gameTimer.Start();
+        }
+
+        private void DrawRestartHint(Graphics g) {
+            string newGame = "Press ENTER for a new game";
+            using (Font font = new Font("Arial", 20, FontStyle.Bold)) {
+                SizeF textSize = g.MeasureString(newGame, font);
+                float x = (ClientSize.Width - textSize.Width) / 2;
+                float y = (ClientSize.Height - textSize.Height) / 2 + 50;
+                g.DrawString(newGame, font, Brushes.Black, x, y);
             }
         }
     }
