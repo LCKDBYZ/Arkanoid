@@ -85,13 +85,13 @@ namespace Arkanoid
         }
 
         private void Form1_KeyDown(object sender, KeyEventArgs e) {
-            if (e.KeyCode == Keys.Left) leftPressed = true;
-            if (e.KeyCode == Keys.Right) rightPressed = true;
+            if (e.KeyCode == Keys.Left || e.KeyCode == Keys.A) leftPressed = true;
+            if (e.KeyCode == Keys.Right || e.KeyCode == Keys.D) rightPressed = true;
         }
 
         private void Form1_KeyUp(object sender, KeyEventArgs e) {
-            if (e.KeyCode == Keys.Left) leftPressed = false;
-            if (e.KeyCode == Keys.Right) rightPressed = false;
+            if (e.KeyCode == Keys.Left || e.KeyCode == Keys.A) leftPressed = false;
+            if (e.KeyCode == Keys.Right || e.KeyCode == Keys.D) rightPressed = false;
         }
 
         protected override void OnPaint(PaintEventArgs e) {
