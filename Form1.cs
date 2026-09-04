@@ -20,6 +20,9 @@ namespace Arkanoid
         // Timer
         private System.Windows.Forms.Timer gameTimer;
 
+        //Game Over
+        private bool isGameOver = false;
+
         public Form1() {
             InitializeComponent();
 
@@ -42,6 +45,8 @@ namespace Arkanoid
         }
 
         private void GameTimer_Tick(object sender, EventArgs e) {
+            if (isGameOver) return;
+
             // Moving the platform
             if (leftPressed) paddleX -= paddleSpeed;
             if (rightPressed) paddleX += paddleSpeed;
@@ -69,6 +74,13 @@ namespace Arkanoid
                 ballDY *= -1;
             }
 
+            // Ball hits ground
+            if (ballY + ballSize >= ClientSize.Height) {
+                isGameOver = true;
+                gameTimer.Stop();
+
+            }
+
             Invalidate(); // Repaint
         }
 
@@ -91,6 +103,17 @@ namespace Arkanoid
 
             // Ball
             g.FillEllipse(Brushes.Red, ballX, ballY, ballSize, ballSize);
+
+            // Game Over text
+            if (isGameOver) {
+                string text = "GAME OVER";
+                using (Font font = new Font("Arial", 40, FontStyle.Bold)) {
+                    SizeF textSize = g.MeasureString(text, font);
+                    float x = (ClientSize.Width - textSize.Width) / 2;
+                    float y = (ClientSize.Height - textSize.Height) / 2;
+                    g.DrawString(text, font, Brushes.Red, x, y);
+                }
+            }
         }
     }
 }
