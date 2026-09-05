@@ -117,6 +117,11 @@ namespace Arkanoid
                 ResetGame();
             }
             if (e.KeyCode == Keys.Escape) {
+                if (isGameOver || isGameWon) {
+                    Application.Exit();
+                    return;
+                }
+
                 if (!isGamePaused) {
                     isGamePaused = true;
                     gameTimer.Stop();
@@ -174,6 +179,7 @@ namespace Arkanoid
                     g.DrawString(text, font, Brushes.Red, x, y);
                 }
                 DrawRestartHint(g);
+                DrawExitHint(g);
 
                 leftPressed = false;
                 rightPressed = false;
@@ -189,6 +195,7 @@ namespace Arkanoid
                     g.DrawString(text, font, Brushes.Yellow, x, y);
                 }
                 DrawRestartHint(g);
+                DrawExitHint(g);
                 leftPressed = false;
                 rightPressed = false;
             }
@@ -351,6 +358,16 @@ namespace Arkanoid
                 SizeF textSize = g.MeasureString(newGame, font);
                 float x = (ClientSize.Width - textSize.Width) / 2;
                 float y = (ClientSize.Height - textSize.Height) / 2 + 50;
+                g.DrawString(newGame, font, Brushes.Black, x, y);
+            }
+        }
+
+        private void DrawExitHint(Graphics g) {
+            string newGame = "Press ESC to exit game";
+            using (Font font = new Font("Arial", 20, FontStyle.Bold)) {
+                SizeF textSize = g.MeasureString(newGame, font);
+                float x = (ClientSize.Width - textSize.Width) / 2;
+                float y = (ClientSize.Height - textSize.Height) / 2 + 80;
                 g.DrawString(newGame, font, Brushes.Black, x, y);
             }
         }
