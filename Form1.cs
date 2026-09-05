@@ -29,6 +29,7 @@ namespace Arkanoid
         //Game Status
         private bool isGameOver = false;
         private bool isGameWon = false;
+        private bool isGamePaused = false;
 
         public Form1() {
             InitializeComponent();
@@ -84,6 +85,17 @@ namespace Arkanoid
             if (e.KeyCode == Keys.Enter && (isGameOver || isGameWon)) {
                 ResetGame();
             }
+            if (e.KeyCode == Keys.Escape) {
+                if (!isGamePaused) {
+                    isGamePaused = true;
+                    gameTimer.Stop();
+                }
+                else {
+                    isGamePaused = false;
+                    gameTimer.Start();
+                }
+                Invalidate(); // Repaint
+            }
         }
 
         private void Form1_KeyUp(object sender, KeyEventArgs e) {
@@ -138,6 +150,24 @@ namespace Arkanoid
                 DrawRestartHint(g);
                 leftPressed = false;
                 rightPressed = false;
+            }
+            
+            // Pause game
+            if (!isGameWon && !isGameOver && isGamePaused) {
+                string text = "GAME PAUSED";
+                using (Font font = new Font("Arial", 40, FontStyle.Bold)) {
+                    SizeF textSize = g.MeasureString(text, font);
+                    float x = (ClientSize.Width - textSize.Width) / 2;
+                    float y = (ClientSize.Height - textSize.Height) / 2;
+                    g.DrawString(text, font, Brushes.Black, x, y);
+                }
+                string unPause = "Press ESCAPE to unpause";
+                using (Font font = new Font("Arial", 20, FontStyle.Bold)) {
+                    SizeF textSize = g.MeasureString(unPause, font);
+                    float x = (ClientSize.Width - textSize.Width) / 2;
+                    float y = (ClientSize.Height - textSize.Height) / 2 + 50;
+                    g.DrawString(unPause, font, Brushes.Black, x, y);
+                }
             }
         }
 
@@ -233,9 +263,11 @@ namespace Arkanoid
             // State flags
             isGameOver = false;
             isGameWon = false;
+            isGamePaused = false;
 
             // Bricks
             CreateBricks();
+
             gameTimer.Start();
         }
 
