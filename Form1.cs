@@ -13,7 +13,7 @@ namespace Arkanoid
         private float paddleX = 350;
         private int paddleY = 550;
         private int paddleWidth = 100, paddleHeight = 15;
-        private int paddleSpeed = 8;
+        private int paddleSpeed = 10;
 
         // Bricks
         private List<Brick> bricks = new List<Brick>();
@@ -216,6 +216,17 @@ namespace Arkanoid
                     float y = (ClientSize.Height - textSize.Height) / 2 + 50;
                     g.DrawString(unPause, font, Brushes.Black, x, y);
                 }
+                {
+                    float centerX = ballX + ballSize / 2f;
+                    float centerY = ballY + ballSize / 2f;
+                    float length = MathF.Sqrt(ballDX * ballDX + ballDY * ballDY);
+                    float dirX = ballDX / length;
+                    float dirY = ballDY / length;
+                    float endX = centerX + dirX * 40;
+                    float endY = centerY + dirY * 40;
+                    g.DrawLine(Pens.Black, centerX, centerY, endX, endY);
+                }
+
             }
 
             // Aim indicator
