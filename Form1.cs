@@ -1,6 +1,3 @@
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TrackBar;
-
 namespace Arkanoid
 {
     public partial class Form1 : Form {
@@ -9,6 +6,8 @@ namespace Arkanoid
         private float ballX = 400, ballY = 300;
         private float ballDX = 4, ballDY = -4;
         private int ballSize = 15;
+        private float ballSpeedMultiplier = 1.0f;
+        private const float speedIncreasePerBrick = 0.03f; // 3% speed up
 
         // Platform
         private float paddleX = 350;
@@ -64,8 +63,8 @@ namespace Arkanoid
             paddleX = Math.Clamp(paddleX, 0, ClientSize.Width - paddleWidth);
 
             // Moving the ball
-            ballX += ballDX;
-            ballY += ballDY;
+            ballX += ballDX * ballSpeedMultiplier;
+            ballY += ballDY * ballSpeedMultiplier;
 
             CollisionCheck();
 
@@ -234,6 +233,8 @@ namespace Arkanoid
                     else {
                         ballDY *= -1; // Ball hit brick from the top/bottom
                     }
+                    ballSpeedMultiplier += speedIncreasePerBrick;
+                    ballSpeedMultiplier = Math.Min(ballSpeedMultiplier, 2.2f);
 
                     break;
                 }
@@ -252,6 +253,7 @@ namespace Arkanoid
             ballY = 300;
             ballDX = 4;
             ballDY = -4;
+            ballSpeedMultiplier = 1.0f;
 
             // Paddle
             paddleX = 350;
