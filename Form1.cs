@@ -22,8 +22,18 @@ namespace Arkanoid
         private bool leftPressed = false;
         private bool rightPressed = false;
 
+        private bool arrowLeftPressed = false;
+        private bool arrowRightPressed = false;
+
         // Timer
         private System.Windows.Forms.Timer gameTimer;
+
+        // Launch control
+        private bool isLaunched = false;
+        private float aimAngle = 0f;
+        private const float maxAimAngle = 60f;
+        private const float aimRotateSpeed = 4f;
+        private const float baseBallSpeed = 6f;
 
         //Game Status
         private bool isGameOver = false;
@@ -62,6 +72,21 @@ namespace Arkanoid
             if (rightPressed) paddleX += paddleSpeed;
             paddleX = Math.Clamp(paddleX, 0, ClientSize.Width - paddleWidth);
 
+            // Launch control
+            if (!isLaunched) {
+                // The ball stays on the platform
+                ballX = paddleX + paddleWidth / 2f - ballSize / 2f;
+                ballY = paddleY - ballSize;
+
+                // Célzási szög állítása
+                if (arrowLeftPressed) aimAngle -= aimRotateSpeed;
+                if (arrowRightPressed) aimAngle += aimRotateSpeed;
+                aimAngle = Math.Clamp(aimAngle, -maxAimAngle, maxAimAngle);
+
+                Invalidate();
+                return; // if not started we shouldnt watch collisions and ball movement
+            }
+
             // Moving the ball
             ballX += ballDX * ballSpeedMultiplier;
             ballY += ballDY * ballSpeedMultiplier;
@@ -78,8 +103,15 @@ namespace Arkanoid
         }
 
         private void Form1_KeyDown(object sender, KeyEventArgs e) {
-            if (e.KeyCode == Keys.Left || e.KeyCode == Keys.A) leftPressed = true;
-            if (e.KeyCode == Keys.Right || e.KeyCode == Keys.D) rightPressed = true;
+            if (e.KeyCode == Keys.A) leftPressed = true;
+            if (e.KeyCode == Keys.D) rightPressed = true;
+
+            if (e.KeyCode == Keys.Left) { arrowLeftPressed = true; }
+            if (e.KeyCode == Keys.Right) { arrowRightPressed = true; }
+
+            if (e.KeyCode == Keys.Space && !isLaunched && !isGameOver && !isGameWon && !isGamePaused) {
+                LaunchBall();
+            }
 
             if (e.KeyCode == Keys.Enter && (isGameOver || isGameWon)) {
                 ResetGame();
@@ -98,8 +130,18 @@ namespace Arkanoid
         }
 
         private void Form1_KeyUp(object sender, KeyEventArgs e) {
-            if (e.KeyCode == Keys.Left || e.KeyCode == Keys.A) leftPressed = false;
-            if (e.KeyCode == Keys.Right || e.KeyCode == Keys.D) rightPressed = false;
+            if (e.KeyCode == Keys.A) leftPressed = false;
+            if (e.KeyCode == Keys.D) rightPressed = false;
+
+            if (e.KeyCode == Keys.Left) { arrowLeftPressed = false; }
+            if (e.KeyCode == Keys.Right) { arrowRightPressed = false; }
+        }
+
+        private void LaunchBall() {
+            isLaunched = true;
+            double rad = aimAngle * Math.PI / 180.0;
+            ballDX = (float)(Math.Sin(rad) * baseBallSpeed);
+            ballDY = (float)(-Math.Cos(rad) * baseBallSpeed);
         }
 
         protected override void OnPaint(PaintEventArgs e) {
@@ -168,6 +210,21 @@ namespace Arkanoid
                     g.DrawString(unPause, font, Brushes.Black, x, y);
                 }
             }
+
+            // Aim indicator
+            if (!isLaunched && !isGameOver && !isGameWon && !isGamePaused) {
+                float centerX = ballX + ballSize / 2f;
+                float centerY = ballY + ballSize / 2f;
+                double rad = aimAngle * Math.PI / 180.0;
+                float endX = centerX + (float)(Math.Sin(rad) * 40);
+                float endY = centerY - (float)(Math.Cos(rad) * 40);
+                g.DrawLine(Pens.Black, centerX, centerY, endX, endY);
+
+                string hint = "MOVE with A/D, AIM with <- ->, START with SPACE";
+                using (Font font = new Font("Arial", 14)) {
+                    g.DrawString(hint, font, Brushes.Black, 10, ClientSize.Height - 30);
+                }
+            }
         }
 
         private void CreateBricks() {
@@ -205,7 +262,17 @@ namespace Arkanoid
                 ballY + ballSize <= paddleY + paddleHeight &&
                 ballX + ballSize >= paddleX &&
                 ballX <= paddleX + paddleWidth) {
-                ballDY *= -1;
+
+                // Where did the ball hit, based on the middle point (-1 = left, 0 = middle, +1 = right)
+                float hitPos = (ballX + ballSize / 2f) - (paddleX + paddleWidth / 2f);
+                float normalized = Math.Clamp(hitPos / (paddleWidth / 2f), -1f, 1f);
+
+                float bounceAngleDeg = normalized * maxAimAngle;
+                double rad = bounceAngleDeg * Math.PI / 180.0;
+
+                float speed = MathF.Sqrt(ballDX * ballDX + ballDY * ballDY);
+                ballDX = (float)(Math.Sin(rad) * speed);
+                ballDY = (float)(-Math.Cos(rad) * speed);
             }
 
             // Ball hits bricks
@@ -261,11 +328,16 @@ namespace Arkanoid
             // Keyboard
             leftPressed = false;
             rightPressed = false;
+            arrowLeftPressed = false;
+            arrowRightPressed = false;
 
             // State flags
             isGameOver = false;
             isGameWon = false;
             isGamePaused = false;
+            isLaunched = false;
+
+            aimAngle = 0f;
 
             // Bricks
             CreateBricks();
