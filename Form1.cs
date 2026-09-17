@@ -36,9 +36,8 @@ namespace Arkanoid
         private const float baseBallSpeed = 6f;
 
         //Game Status
-        private bool isGameOver = false;
-        private bool isGameWon = false;
-        private bool isGamePaused = false;
+        private GameState currentState = GameState.Menu; // starts with menu
+        private int lives = 1;
 
         public Form1() {
             InitializeComponent();
@@ -64,8 +63,7 @@ namespace Arkanoid
         }
 
         private void GameTimer_Tick(object sender, EventArgs e) {
-            if (isGameOver) return;
-            if (isGameWon) return;
+            if (currentState != GameState.Playing) return;
 
             // Moving the platform
             if (leftPressed) paddleX -= paddleSpeed;
@@ -95,7 +93,7 @@ namespace Arkanoid
 
             // Win check
             if (bricks.All(b => !b.IsAlive)) {
-                isGameWon = true;
+                currentState = GameState.Won;
                 gameTimer.Stop();
             }
 
@@ -103,34 +101,53 @@ namespace Arkanoid
         }
 
         private void Form1_KeyDown(object sender, KeyEventArgs e) {
+            // Menu
+            if (currentState == GameState.Menu) {
+                if (e.KeyCode == Keys.Enter) {
+                    ResetGame();
+                }
+                if (e.KeyCode == Keys.Escape) {
+                    Application.Exit();
+                }
+                return; // nothing else should react while in the menu
+            }
+
+            // Game Over / Won
+            if (currentState == GameState.GameOver || currentState == GameState.Won) {
+                if (e.KeyCode == Keys.Enter) {
+                    ResetGame();
+                }
+                if (e.KeyCode == Keys.Escape) {
+                    Application.Exit();
+                }
+                return;
+            }
+
+            // Pause
+            if (e.KeyCode == Keys.Escape) {
+                if (currentState == GameState.Playing) {
+                    currentState = GameState.Paused;
+                    gameTimer.Stop();
+                }
+                else if (currentState == GameState.Paused) {
+                    currentState = GameState.Playing;
+                    gameTimer.Start();
+                }
+                Invalidate();
+                return;
+            }
+
+            // Only while playing
+            if (currentState != GameState.Playing) return;
+
             if (e.KeyCode == Keys.A) leftPressed = true;
             if (e.KeyCode == Keys.D) rightPressed = true;
 
             if (e.KeyCode == Keys.Left) { arrowLeftPressed = true; }
             if (e.KeyCode == Keys.Right) { arrowRightPressed = true; }
 
-            if (e.KeyCode == Keys.Space && !isLaunched && !isGameOver && !isGameWon && !isGamePaused) {
+            if (e.KeyCode == Keys.Space && !isLaunched) {
                 LaunchBall();
-            }
-
-            if (e.KeyCode == Keys.Enter && (isGameOver || isGameWon)) {
-                ResetGame();
-            }
-            if (e.KeyCode == Keys.Escape) {
-                if (isGameOver || isGameWon) {
-                    Application.Exit();
-                    return;
-                }
-
-                if (!isGamePaused) {
-                    isGamePaused = true;
-                    gameTimer.Stop();
-                }
-                else {
-                    isGamePaused = false;
-                    gameTimer.Start();
-                }
-                Invalidate(); // Repaint
             }
         }
 
@@ -153,6 +170,12 @@ namespace Arkanoid
             base.OnPaint(e);
             var g = e.Graphics;
 
+            // Menu - draw only the menu, nothing else
+            if (currentState == GameState.Menu) {
+                DrawMenu(g);
+                return;
+            }
+
             // we need to paint the bricks first so everything can go over them
             // Bricks
             foreach (Brick brick in bricks) {
@@ -170,7 +193,7 @@ namespace Arkanoid
             
 
             // Game Over text
-            if (isGameOver) {
+            if (currentState == GameState.GameOver) {
                 string text = "GAME OVER";
                 using (Font font = new Font("Arial", 40, FontStyle.Bold)) {
                     SizeF textSize = g.MeasureString(text, font);
@@ -186,7 +209,7 @@ namespace Arkanoid
             }
 
             // Game Won text
-            if (isGameWon) {
+            if (currentState == GameState.Won) {
                 string text = "YOU WIN!";
                 using (Font font = new Font("Arial", 40, FontStyle.Bold)) {
                     SizeF textSize = g.MeasureString(text, font);
@@ -201,7 +224,7 @@ namespace Arkanoid
             }
             
             // Pause game
-            if (!isGameWon && !isGameOver && isGamePaused) {
+            if (currentState == GameState.Paused) {
                 string text = "GAME PAUSED";
                 using (Font font = new Font("Arial", 40, FontStyle.Bold)) {
                     SizeF textSize = g.MeasureString(text, font);
@@ -230,7 +253,7 @@ namespace Arkanoid
             }
 
             // Aim indicator
-            if (!isLaunched && !isGameOver && !isGameWon && !isGamePaused) {
+            if (!isLaunched && currentState == GameState.Playing) {
                 float centerX = ballX + ballSize / 2f;
                 float centerY = ballY + ballSize / 2f;
                 double rad = aimAngle * Math.PI / 180.0;
@@ -243,6 +266,12 @@ namespace Arkanoid
                     g.DrawString(hint, font, Brushes.Black, 10, ClientSize.Height - 30);
                 }
             }
+
+            // Lives counter
+            if (lives >= 0) {
+                DrawLives(g);
+            }
+            
         }
 
         private void CreateBricks() {
@@ -266,12 +295,18 @@ namespace Arkanoid
 
         private void CollisionCheck() {
             // Ball hits walls
-            if (ballX <= 0 || ballX + ballSize >= ClientSize.Width) {
+            if (ballX <= 0) {
+                ballX = 0;
+                ballDX *= -1;
+            }
+            else if (ballX + ballSize >= ClientSize.Width) {
+                ballX = ClientSize.Width - ballSize;
                 ballDX *= -1;
             }
 
             // Ball hits ceiling
             if (ballY <= 0) {
+                ballY = 0;
                 ballDY *= -1;
             }
 
@@ -327,8 +362,14 @@ namespace Arkanoid
 
             // Ball hits ground
             if (ballY + ballSize >= ClientSize.Height) {
-                isGameOver = true;
-                gameTimer.Stop();
+                lives--;
+                if (lives < 0) {
+                    currentState = GameState.GameOver;
+                    gameTimer.Stop();
+                }
+                else {
+                    ResetBallOnPaddle();
+                }
             }
         }
 
@@ -350,10 +391,11 @@ namespace Arkanoid
             arrowRightPressed = false;
 
             // State flags
-            isGameOver = false;
-            isGameWon = false;
-            isGamePaused = false;
-            isLaunched = false;
+            currentState = GameState.Playing;
+
+            if (lives < 0) {
+                lives = 1;
+            }
 
             aimAngle = 0f;
 
@@ -361,6 +403,14 @@ namespace Arkanoid
             CreateBricks();
 
             gameTimer.Start();
+        }
+
+        private void ResetBallOnPaddle() {
+            isLaunched = false;
+            aimAngle = 0f;
+            ballDX = 4;
+            ballDY = -4;
+            ballSpeedMultiplier = 1.0f;
         }
 
         private void DrawRestartHint(Graphics g) {
@@ -380,6 +430,42 @@ namespace Arkanoid
                 float x = (ClientSize.Width - textSize.Width) / 2;
                 float y = (ClientSize.Height - textSize.Height) / 2 + 80;
                 g.DrawString(newGame, font, Brushes.Black, x, y);
+            }
+        }
+
+        private void DrawLives(Graphics g) {
+            string livesCount = "Remaning lives: " + lives;
+            using (Font font = new Font("Arial", 10, FontStyle.Bold)) {
+                SizeF textSize = g.MeasureString(livesCount, font);
+                float x = (ClientSize.Width - textSize.Width);
+                float y = (ClientSize.Height - textSize.Height);
+                g.DrawString(livesCount, font, Brushes.Black, x, y);
+            }
+        }
+
+        private void DrawMenu(Graphics g) {
+            string title = "ARKANOID";
+            using (Font titleFont = new Font("Arial", 50, FontStyle.Bold)) {
+                SizeF titleSize = g.MeasureString(title, titleFont);
+                float x = (ClientSize.Width - titleSize.Width) / 2;
+                float y = ClientSize.Height / 3f;
+                g.DrawString(title, titleFont, Brushes.SteelBlue, x, y);
+            }
+
+            string startHint = "Press ENTER to start";
+            using (Font font = new Font("Arial", 20)) {
+                SizeF hintSize = g.MeasureString(startHint, font);
+                float x = (ClientSize.Width - hintSize.Width) / 2;
+                float y = ClientSize.Height / 2f + 40;
+                g.DrawString(startHint, font, Brushes.Black, x, y);
+            }
+
+            string exitHint = "Press ESC to exit";
+            using (Font font = new Font("Arial", 20)) {
+                SizeF hintSize = g.MeasureString(exitHint, font);
+                float x = (ClientSize.Width - hintSize.Width) / 2;
+                float y = ClientSize.Height / 2f + 80;
+                g.DrawString(exitHint, font, Brushes.Black, x, y);
             }
         }
     }
