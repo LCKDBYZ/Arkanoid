@@ -1,7 +1,6 @@
 namespace Arkanoid
 {
     public partial class Form1 : Form {
-
         // Ball
         private float ballX = 400, ballY = 300;
         private float ballDX = 4, ballDY = -4;
@@ -392,6 +391,7 @@ namespace Arkanoid
 
             // State flags
             currentState = GameState.Playing;
+            isLaunched = false;
 
             if (lives < 0) {
                 lives = 1;
