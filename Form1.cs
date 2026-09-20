@@ -36,11 +36,15 @@ namespace Arkanoid
 
         //Game Status
         private GameState currentState = GameState.Menu; // starts with menu
+        private SaveData saveData;
         private int lives = 1;
+        private int score = 0;
+
 
         public Form1() {
             InitializeComponent();
 
+            saveData = SaveManager.Load();
             gameTimer = new System.Windows.Forms.Timer();
             gameTimer.Interval = 16; // about 60 FPS
             gameTimer.Tick += GameTimer_Tick;
@@ -113,6 +117,7 @@ namespace Arkanoid
 
             // Game Over / Won
             if (currentState == GameState.GameOver || currentState == GameState.Won) {
+                SaveHighScoreIfNeeded();
                 if (e.KeyCode == Keys.Enter) {
                     ResetGame();
                 }
@@ -269,6 +274,7 @@ namespace Arkanoid
             // Lives counter
             if (lives >= 0) {
                 DrawLives(g);
+                DrawScore(g);
             }
             
         }
@@ -284,10 +290,11 @@ namespace Arkanoid
             bricks.Clear();
 
             for (int row = 0; row < rows; row++) {
+                int pointsForRow = (rows - row) * 10;
                 for (int col = 0; col < cols; col++) {
                     float x = col * (brickWidth + padding) + padding;
                     float y = row * (brickHeight + padding) + offsetTop;
-                    bricks.Add(new Brick(x, y, brickWidth, brickHeight));
+                    bricks.Add(new Brick(x, y, brickWidth, brickHeight, pointsForRow));
                 }
             }
         }
@@ -354,6 +361,7 @@ namespace Arkanoid
                     }
                     ballSpeedMultiplier += speedIncreasePerBrick;
                     ballSpeedMultiplier = Math.Min(ballSpeedMultiplier, 2.2f);
+                    score += brick.Points;
 
                     break;
                 }
@@ -396,6 +404,7 @@ namespace Arkanoid
             if (lives < 0) {
                 lives = 1;
             }
+            score = 0;
 
             aimAngle = 0f;
 
@@ -411,6 +420,13 @@ namespace Arkanoid
             ballDX = 4;
             ballDY = -4;
             ballSpeedMultiplier = 1.0f;
+        }
+
+        private void SaveHighScoreIfNeeded() {
+            if (score > saveData.HighScore) {
+                saveData.HighScore = score;
+                SaveManager.Save(saveData);
+            }
         }
 
         private void DrawRestartHint(Graphics g) {
@@ -440,6 +456,15 @@ namespace Arkanoid
                 float x = (ClientSize.Width - textSize.Width);
                 float y = (ClientSize.Height - textSize.Height);
                 g.DrawString(livesCount, font, Brushes.Black, x, y);
+            }
+        }
+
+        private void DrawScore(Graphics g) {
+            string scoreText = "Score: " + score;
+            string highScoreText = "High Score: " + saveData.HighScore;
+            using (Font font = new Font("Arial", 14, FontStyle.Bold)) {
+                g.DrawString(scoreText, font, Brushes.Black, 10, 10);
+                g.DrawString(highScoreText, font, Brushes.Black, 10, 30);
             }
         }
 
