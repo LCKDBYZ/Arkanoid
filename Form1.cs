@@ -1,3 +1,5 @@
+using System;
+
 namespace Arkanoid
 {
     public partial class Form1 : Form {
@@ -79,7 +81,7 @@ namespace Arkanoid
                 ballX = paddleX + paddleWidth / 2f - ballSize / 2f;
                 ballY = paddleY - ballSize;
 
-                // Célzási szög állítása
+                // Adjust aim angle
                 if (arrowLeftPressed) aimAngle -= aimRotateSpeed;
                 if (arrowRightPressed) aimAngle += aimRotateSpeed;
                 aimAngle = Math.Clamp(aimAngle, -maxAimAngle, maxAimAngle);
@@ -280,22 +282,32 @@ namespace Arkanoid
         }
 
         private void CreateBricks() {
-            int rows = 3;
+            int rows = 4;
             int cols = 9;
             int brickWidth = 80;
             int brickHeight = 25;
             int padding = 8;   // Gap between bricks
             int offsetTop = 50; // Gap from the top
+            float fillChance = 0.75f; // the chance to make a brick
+
+            Random random = new Random();
 
             bricks.Clear();
 
             for (int row = 0; row < rows; row++) {
                 int pointsForRow = (rows - row) * 10;
                 for (int col = 0; col < cols; col++) {
+                    if (random.NextDouble() > fillChance) continue;
+
                     float x = col * (brickWidth + padding) + padding;
                     float y = row * (brickHeight + padding) + offsetTop;
                     bricks.Add(new Brick(x, y, brickWidth, brickHeight, pointsForRow));
                 }
+            }
+
+            // we dont want to have an empty map
+            if (bricks.Count == 0) {
+                CreateBricks();
             }
         }
 
