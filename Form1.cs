@@ -186,7 +186,17 @@ namespace Arkanoid
             // Bricks
             foreach (Brick brick in bricks) {
                 if (brick.IsAlive) {
-                    g.FillRectangle(Brushes.SteelBlue, brick.X, brick.Y, brick.Width, brick.Height);
+                    switch (brick.HP) {
+                        case 1:
+                            g.FillRectangle(Brushes.LightSkyBlue, brick.X, brick.Y, brick.Width, brick.Height);
+                            break;
+                        case 2:
+                            g.FillRectangle(Brushes.DodgerBlue, brick.X, brick.Y, brick.Width, brick.Height);
+                            break;
+                        case 3:
+                            g.FillRectangle(Brushes.DarkBlue, brick.X, brick.Y, brick.Width, brick.Height);
+                            break;
+                    }
                 }
             }
 
@@ -301,7 +311,15 @@ namespace Arkanoid
 
                     float x = col * (brickWidth + padding) + padding;
                     float y = row * (brickHeight + padding) + offsetTop;
-                    bricks.Add(new Brick(x, y, brickWidth, brickHeight, pointsForRow));
+                    int chance = random.Next(0, 100);
+                    int hp = 1;
+                    if (chance < 5) {
+                        hp = 3; // 10/256 chance for 3 HP
+                    }
+                    else if (chance < 20) {
+                        hp = 2; // 30/256 chance for 2 HP
+                    }
+                    bricks.Add(new Brick(x, y, brickWidth, brickHeight, pointsForRow, hp));
                 }
             }
 
@@ -354,7 +372,10 @@ namespace Arkanoid
                     ballX <= brick.X + brick.Width &&
                     ballY + ballSize >= brick.Y &&
                     ballY <= brick.Y + brick.Height) {
-                    brick.IsAlive = false;
+                    brick.HP--;
+                    if (brick.HP <= 0) {
+                        brick.IsAlive = false;
+                    }
 
                     // How much overlap
                     float overlapLeft = (ballX + ballSize) - brick.X;

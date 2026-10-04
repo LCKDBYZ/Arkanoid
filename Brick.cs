@@ -7,13 +7,16 @@
         public bool IsAlive;
         public int Points;
 
-        public Brick(float x, float y, int width, int height, int points) {
+        public int HP;
+
+        public Brick(float x, float y, int width, int height, int points, int hp = 1) {
             X = x;
             Y = y;
             Width = width;
             Height = height;
             IsAlive = true;
             Points = points;
+            HP = hp;
         }
     }
 }
