@@ -297,7 +297,7 @@ namespace Arkanoid
             int brickWidth = 80;
             int brickHeight = 25;
             int padding = 8;   // Gap between bricks
-            int offsetTop = 50; // Gap from the top
+            int offsetTop = 60; // Gap from the top
             float fillChance = 0.75f; // the chance to make a brick
 
             Random random = new Random();
