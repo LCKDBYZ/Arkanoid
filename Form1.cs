@@ -55,9 +55,12 @@ namespace Arkanoid
             this.DoubleBuffered = true;
             this.KeyPreview = true;
             this.ClientSize = new Size(800, 600);
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
 
             this.KeyDown += Form1_KeyDown;
             this.KeyUp += Form1_KeyUp;
+
 
             CreateBricks();
 
@@ -99,6 +102,7 @@ namespace Arkanoid
             // Win check
             if (bricks.All(b => !b.IsAlive)) {
                 currentState = GameState.Won;
+                score += lives * 100; // bonus for remaining lives
                 gameTimer.Stop();
             }
 
@@ -314,10 +318,10 @@ namespace Arkanoid
                     int chance = random.Next(0, 100);
                     int hp = 1;
                     if (chance < 5) {
-                        hp = 3; // 10/256 chance for 3 HP
+                        hp = 3;
                     }
                     else if (chance < 20) {
-                        hp = 2; // 30/256 chance for 2 HP
+                        hp = 2; 
                     }
                     bricks.Add(new Brick(x, y, brickWidth, brickHeight, pointsForRow, hp));
                 }
@@ -386,12 +390,18 @@ namespace Arkanoid
                     float minOverlapX = Math.Min(overlapLeft, overlapRight);
                     float minOverlapY = Math.Min(overlapTop, overlapBottom);
 
+                    // we need to put the ball back, outside of the brick and reverse
                     if (minOverlapX < minOverlapY) {
-                        ballDX *= -1; // Ball hit brick from the side
+                        ballDX *= -1;
+                        if (overlapLeft < overlapRight) ballX = brick.X - ballSize;
+                        else ballX = brick.X + brick.Width;
                     }
                     else {
-                        ballDY *= -1; // Ball hit brick from the top/bottom
+                        ballDY *= -1;
+                        if (overlapTop < overlapBottom) ballY = brick.Y - ballSize;
+                        else ballY = brick.Y + brick.Height;
                     }
+
                     ballSpeedMultiplier += speedIncreasePerBrick;
                     ballSpeedMultiplier = Math.Min(ballSpeedMultiplier, 2.2f);
                     score += brick.Points;
