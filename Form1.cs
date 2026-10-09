@@ -61,7 +61,7 @@ namespace Arkanoid
             this.KeyDown += Form1_KeyDown;
             this.KeyUp += Form1_KeyUp;
 
-
+            SoundManager.Init(); // Initialize sound manager
             CreateBricks();
 
         }
@@ -104,6 +104,7 @@ namespace Arkanoid
                 currentState = GameState.Won;
                 score += lives * 100; // bonus for remaining lives
                 gameTimer.Stop();
+                SoundManager.Play(SoundEffect.Win);
             }
 
             Invalidate(); // Repaint
@@ -338,16 +339,19 @@ namespace Arkanoid
             if (ballX <= 0) {
                 ballX = 0;
                 ballDX *= -1;
+                SoundManager.Play(SoundEffect.WallHit);
             }
             else if (ballX + ballSize >= ClientSize.Width) {
                 ballX = ClientSize.Width - ballSize;
                 ballDX *= -1;
+                SoundManager.Play(SoundEffect.WallHit);
             }
 
             // Ball hits ceiling
             if (ballY <= 0) {
                 ballY = 0;
                 ballDY *= -1;
+                SoundManager.Play(SoundEffect.WallHit);
             }
 
             // Ball hits platform
@@ -355,6 +359,8 @@ namespace Arkanoid
                 ballY + ballSize <= paddleY + paddleHeight &&
                 ballX + ballSize >= paddleX &&
                 ballX <= paddleX + paddleWidth) {
+
+                SoundManager.Play(SoundEffect.PaddleHit);
 
                 // Where did the ball hit, based on the middle point (-1 = left, 0 = middle, +1 = right)
                 float hitPos = (ballX + ballSize / 2f) - (paddleX + paddleWidth / 2f);
@@ -379,7 +385,11 @@ namespace Arkanoid
                     brick.HP--;
                     if (brick.HP <= 0) {
                         brick.IsAlive = false;
+                        SoundManager.Play(SoundEffect.BrickBreak);
+                    } else {
+                        SoundManager.Play(SoundEffect.BrickHit);
                     }
+                   
 
                     // How much overlap
                     float overlapLeft = (ballX + ballSize) - brick.X;
@@ -406,6 +416,8 @@ namespace Arkanoid
                     ballSpeedMultiplier = Math.Min(ballSpeedMultiplier, 2.2f);
                     score += brick.Points;
 
+                    
+
                     break;
                 }
             }
@@ -416,9 +428,11 @@ namespace Arkanoid
                 if (lives < 0) {
                     currentState = GameState.GameOver;
                     gameTimer.Stop();
+                    SoundManager.Play(SoundEffect.GameOver);
                 }
                 else {
                     ResetBallOnPaddle();
+                    SoundManager.Play(SoundEffect.LoseLife);
                 }
             }
         }
