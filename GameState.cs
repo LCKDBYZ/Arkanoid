@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 namespace Arkanoid {
     internal enum GameState {
         Menu,
+        Settings,
+
         Playing,
         Paused,
         GameOver,

@@ -11,7 +11,8 @@ namespace Arkanoid {
         private static WaveOut outputDevice;
         private static MixingSampleProvider mixer;
 
-        public static bool Enabled { get; set; } = true;
+        public static float Volume { get; set; } = 1.0f; // 0.0 - 1.0
+         public static bool Enabled { get; set; } = true;
 
         public static void Init() {
             try {
@@ -57,7 +58,7 @@ namespace Arkanoid {
         }
 
         public static void Play(SoundEffect effect) {
-            if (!Enabled || mixer == null) return;
+            if (!Enabled || mixer == null || Volume == 0f) return;
 
             if (sounds.TryGetValue(effect, out CachedSound sound)) {
                 ISampleProvider input = new CachedSoundSampleProvider(sound);
@@ -69,11 +70,19 @@ namespace Arkanoid {
                     input = new WdlResamplingSampleProvider(input, MixerSampleRate);
 
                 input = new VolumeSampleProvider(input) {
-                    Volume = 1.0f
+                    
+                    Volume = effect == SoundEffect.MenuOpen || effect == SoundEffect.LoseLife ? Volume * 0.2f : Volume // MenuOpen is quieter
                 };
 
                 mixer.AddMixerInput(input);
             }
+        }
+
+        public static void Shutdown() {
+            outputDevice?.Stop();
+            outputDevice?.Dispose();
+            outputDevice = null;
+            mixer = null;
         }
     }
    

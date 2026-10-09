@@ -2,7 +2,7 @@ using System;
 
 namespace Arkanoid
 {
-    public partial class Form1 : Form {
+    public partial class Arkanoid : Form {
         // Ball
         private float ballX = 400, ballY = 300;
         private float ballDX = 4, ballDY = -4;
@@ -43,7 +43,7 @@ namespace Arkanoid
         private int score = 0;
 
 
-        public Form1() {
+        public Arkanoid() {
             InitializeComponent();
 
             saveData = SaveManager.Load();
@@ -58,15 +58,17 @@ namespace Arkanoid
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
 
-            this.KeyDown += Form1_KeyDown;
-            this.KeyUp += Form1_KeyUp;
+            this.KeyDown += Arkanoid_KeyDown;
+            this.KeyUp += Arkanoid_KeyUp;
 
             SoundManager.Init(); // Initialize sound manager
             CreateBricks();
 
+            this.FormClosing += (s, e) => SoundManager.Shutdown();
+
         }
 
-        private void Form1_Load(object sender, EventArgs e) {
+        private void Arkanoid_Load(object sender, EventArgs e) {
 
         }
 
@@ -110,7 +112,7 @@ namespace Arkanoid
             Invalidate(); // Repaint
         }
 
-        private void Form1_KeyDown(object sender, KeyEventArgs e) {
+        private void Arkanoid_KeyDown(object sender, KeyEventArgs e) {
             // Menu
             if (currentState == GameState.Menu) {
                 if (e.KeyCode == Keys.Enter) {
@@ -119,6 +121,17 @@ namespace Arkanoid
                 if (e.KeyCode == Keys.Escape) {
                     Application.Exit();
                 }
+
+                if (e.KeyCode == Keys.S) {
+                    using (SettingsForm form = new SettingsForm(saveData)) {
+                        if (form.ShowDialog(this) == DialogResult.OK) {
+                            SoundManager.Enabled = saveData.SoundEnabled;
+                            SoundManager.Volume = saveData.Volume / 100f;
+                            SaveManager.Save(saveData);
+                        }
+                    }
+                }
+
                 return; // nothing else should react while in the menu
             }
 
@@ -162,7 +175,7 @@ namespace Arkanoid
             }
         }
 
-        private void Form1_KeyUp(object sender, KeyEventArgs e) {
+        private void Arkanoid_KeyUp(object sender, KeyEventArgs e) {
             if (e.KeyCode == Keys.A) leftPressed = false;
             if (e.KeyCode == Keys.D) rightPressed = false;
 

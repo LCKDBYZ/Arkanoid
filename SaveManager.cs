@@ -25,6 +25,7 @@ namespace Arkanoid {
             try {
                 string json = File.ReadAllText(path);
                 SaveData data = JsonSerializer.Deserialize<SaveData>(json);
+                data.Volume = Math.Clamp(data.Volume, 0f, 1f); // Ensure volume is between 0 and 1
                 return data ?? new SaveData();
             }
             catch {

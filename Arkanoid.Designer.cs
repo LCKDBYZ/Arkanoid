@@ -1,6 +1,6 @@
 ﻿namespace Arkanoid
 {
-    partial class Form1
+    partial class Arkanoid
     {
         /// <summary>
         ///  Required designer variable.
@@ -29,15 +29,15 @@
         private void InitializeComponent() {
             SuspendLayout();
             // 
-            // Form1
+            // Arkanoid
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.Beige;
             ClientSize = new Size(800, 450);
-            Name = "Form1";
-            Text = "Form1";
-            Load += Form1_Load;
+            Name = "Arkanoid";
+            Text = "Arkanoid";
+            Load += Arkanoid_Load;
             ResumeLayout(false);
         }
 
